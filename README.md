@@ -1,193 +1,77 @@
-# DSA5205 Project 2 – Run Guide (Notebook Version)
+# A-Share ML Return Prediction and Strategy Backtesting
 
-> Main notebook: `DSA5205_project2_Teams12_1115.ipynb`  
-> Working directory: the folder where this notebook is located.
+This repository contains a National University of Singapore course project on weekly A-share return prediction and factor strategy backtesting. It compares Ridge, Elastic Net, and MLP models on six ChiNext stocks, with `399006.SZ` used as the benchmark reference. The project is positioned as a modeling and validation exercise, not as a live trading strategy.
 
----
+## What This Project Shows
 
-## 1. Environment Setup
+- Built a weekly factor dataset for six ChiNext stocks with valuation, quality, growth, flow, momentum, volatility, liquidity, RSI, and MACD-style signals.
+- Used `399006.SZ` weekly returns as the benchmark reference for strategy evaluation.
+- Compared Ridge, Elastic Net, and MLPRegressor / neural-network pipelines.
+- Applied chronological splitting, rolling-origin validation, and post-cost weekly rebalancing logic to reduce look-ahead bias.
+- Exported model-specific prediction files and a unified evaluation workflow for NAV, Sharpe, drawdown, hit rate, RankIC, turnover, and benchmark comparison.
 
-It is recommended to use Python 3.9–3.11 and a virtual environment.
-For end-to-end runs, we recommend that after installing the packages listed in requirements.txt, 
-you place the bm and factors data files in the same directory as the script in advance. 
-Since the data-fetching API may occasionally fail, 
-you can instead use these prepared data files.
+## Data and Inputs
 
-In addition, for the MLP model, we performed some Excel preprocessing based on the original data file, 
-so when running this part, please also place the MLP_data file in the same directory as the script.
+The repository keeps the main inputs beside the notebook so the analysis can run even when external data APIs are unavailable.
+
+```text
+.
+|-- DSA5205_project2_Teams12_1115.ipynb
+|-- factors_6stocks_weekly_20251107_013757.csv
+|-- bm_399006_weekly.csv
+|-- MLP_data.csv
+|-- requirements.txt
+`-- README.md
+```
+
+## Modeling Workflow
+
+1. Prepare weekly stock-level factors and next-week return labels.
+2. Load or build the `399006.SZ` benchmark return series.
+3. Train Ridge with cross-validation and generate weekly ranking signals.
+4. Train Elastic Net with a grid over alpha and l1 ratio, using validation Sharpe for model selection.
+5. Train an MLP model and save predictions for the same evaluation framework.
+6. Standardize all model outputs for post-cost walk-forward comparison.
+
+## Verified Notebook Outputs
+
+The executed notebook contains the following evidence:
+
+- Ridge, Elastic Net, and MLP model code paths are present in the notebook.
+- The unified evaluation loads 109 out-of-sample weekly periods for each model.
+- The unified evaluation confirms six tickers and 654 standardized prediction rows per model.
+- The MLP section reports best validation RankIC around 0.4582 and a saved test prediction file with 271 rows.
+- The final comparison table includes hit rate, mean RankIC, max drawdown, turnover events, and benchmark-relative fields.
+
+Some annualized return outputs in the notebook are very high because they are generated from a small, concentrated weekly sample. For resume or interview use, this project should be discussed as a controlled factor-modeling and backtesting workflow, not as proof of investable alpha.
+
+## Reproduce
+
+Use Python 3.9 to 3.11 when possible.
 
 ```bash
-# 1) Create and activate a virtual environment (optional but recommended)
 python -m venv .venv
 
 # Windows
-.venv\Scriptsctivate
+.venv\\Scripts\\activate
 
 # macOS / Linux
 # source .venv/bin/activate
 
-# 2) Install dependencies
 pip install -r requirements.txt
+jupyter notebook DSA5205_project2_Teams12_1115.ipynb
 ```
 
----
-
-## 2. Required Input Files
-
-Place the following files in the **same directory** as the notebook:
-
-- `DSA5205_project2_Teams12_1115.ipynb`  
-  The main project notebook.
-
-- `factors_6stocks_weekly_20251107_013757.csv`  
-  Weekly factors and returns for 6 ChiNext stocks (main input data).
-
-- `bm_399006_weekly.csv`  
-  Weekly returns for the benchmark index 399006.SZ.  
-  If this file is missing, some code blocks may attempt to generate it automatically.
-
-- `MLP_data.csv`  
-  Ground-truth file for the MLP model in the unified evaluation:  
-  typically contains columns like `date`, `stock_code`, `next_week_return`.
-
-
-> Note: Because external data APIs can fail (e.g., connection issues),  
-> it is safer to prepare the CSV files above in advance and put them next to the notebook.
-
----
-
-## 3. How to Run the Notebook
-
-You can run the notebook in **two ways**:
-
-### 3.1. Run from JupyterLab / Jupyter Notebook
-
-1. Start Jupyter in the project directory:
-
-   ```bash
-   jupyter lab
-   # or
-   jupyter notebook
-   ```
-
-2. Open `DSA5205_project2_Teams12_1115.ipynb`.
-
-3. From the menu, choose:
-
-   - **Cell → Run All**  
-
-   This will execute all cells from top to bottom.
-
----
-
-### 3.2. Run from Command Line (Non-interactive)
-
-If you want to execute the notebook end-to-end from the command line:
+Command-line execution:
 
 ```bash
-cd /path/to/project_root
-
-jupyter nbconvert   --execute   --to notebook   --inplace   DSA5205_project2_Teams12_1115.ipynb
+jupyter nbconvert --execute --to notebook --inplace DSA5205_project2_Teams12_1115.ipynb --ExecutePreprocessor.timeout=1200
 ```
 
-- `--execute` runs all cells.
-- `--inplace` writes outputs back into the same `.ipynb` file.
-- If execution succeeds, all expected result files and plots will be created under the output folders.
+## Scope and Limits
 
----
+This is an academic quant-finance project. It demonstrates factor construction, model comparison, validation discipline, and backtest reporting. It should not be described as personal fund management, live trading, fundraising, or investment advice.
 
-## 4. Main Workflow Overview
+## Stack
 
-When executed successfully, the notebook performs (conceptually):
-
-1. **Data & Benchmark Preparation**
-   - Load weekly factors and returns for 6 ChiNext stocks.
-   - Prepare or load benchmark weekly returns for 399006.SZ.
-
-2. **Ridge Model Pipeline**
-   - Train Ridge model with cross-validation.
-   - Run backtest and compute performance metrics.
-   - Save prediction details, returns, and plots to `out_ridge/`.
-
-3. **Elastic Net (EN) Pipeline**
-   - Train Elastic Net with a grid over α and l1_ratio.
-   - Perform time-series cross-validation and select the best model.
-   - Run test-period backtest and save results to `reports_enet_all/`.
-
-4. **MLP (Neural Network) Pipeline**
-   - Train an MLP model on the same factor dataset (or MLP-specific data).
-   - Save model weights and out-of-sample predictions to `out_MLP/`.
-
-5. **Unified Evaluation of All Models**
-   - Standardize output formats (NAV series and predictions).
-   - Compare Ridge, EN, and MLP in `_out/` (returns, Sharpe, drawdown, etc.).
-
----
-
-## 5. Expected Output Directory Structure
-
-After a full successful run, the project directory is expected to look like:
-
-```text
-project_root/
-├─ DSA5205_project2_Teams12_1115.ipynb
-├─ requirements.txt
-├─ factors_6stocks_weekly_20251107_013757.csv     # main input (6-stock weekly factors & returns)
-├─ bm_399006_weekly.csv                           # benchmark index weekly returns (can be generated by the code)
-├─ MLP_data.csv                                   # ground-truth file for unified evaluation of the MLP model
-│
-├─ out_ridge/                                     # full pipeline outputs for the Ridge strategy
-│  ├─ pred_detail.csv                             # train + validation prediction details
-│  ├─ pred_detail_test(Ridge).csv                 # test-set prediction details
-│  ├─ weekly_ret_net.csv                          # backtest weekly net returns (after costs)
-│  ├─ weekly_ret_net_test.csv                     # test-period weekly returns
-│  ├─ summary_metrics.csv                         # backtest performance summary
-│  ├─ summary_metrics_test.csv                    # test-period performance summary
-│  ├─ cv_leaderboard.csv                          # CV results leaderboard
-│  ├─ fig_equity_curve.png                        # equity curve
-│  ├─ fig_rolling_sharpe.png                      # rolling Sharpe ratio
-│  ├─ forecast_next_week.csv                      # next-week portfolio / forecasts
-│  ├─ rebalance_decision.json                     # rebalance decisions in JSON format
-│  └─ ...                                         # other auxiliary logs/artifacts
-│
-├─ reports_enet_all/                              # full pipeline outputs for the Elastic Net strategy
-│  ├─ pred_detail_test(EN).csv                    # EN test-set predictions
-│  ├─ weekly_ret_net_test.csv                     # test-period net return series
-│  ├─ summary_test_enet.csv                       # EN test-period performance summary
-│  ├─ cv_leaderboard_enet.csv                     # EN hyperparameter CV leaderboard
-│  ├─ loss_curve_enet.png                         # training loss curve
-│  ├─ cv_sharpe_line.png                          # CV Sharpe vs hyperparameters
-│  ├─ cv_sharpe_box.png                           # distribution of CV Sharpe scores
-│  ├─ model_coefficients_test.csv                 # standardized coefficients
-│  ├─ model_intercept_test.csv                    # intercept on raw scale
-│  └─ best_model_trainval_metrics.(csv/json)      # best-model train/validation metrics
-│
-├─ out_MLP/                                       # MLP model training and prediction outputs
-│  ├─ mlp_preds.csv                               # standardized prediction table: date, stock_code, pred[, actual]
-│  ├─ best_model.pt                               # best MLP model weights
-│  ├─ train_log.csv                               # training log (per-epoch metrics)
-│  ├─ performance_summary.csv                     # train/validation/test performance summary
-│  ├─ split_info.csv                              # information on train/val/test splits
-│  ├─ corr_heatmap_raw.png                        # correlation heatmap for raw factors
-│  ├─ corr_heatmap_pca.png                        # correlation heatmap after PCA
-│  ├─ pca_explained_variance.png                  # PCA explained-variance plot
-│  └─ net_value_curve.png                         # MLP strategy equity curve
-│
-└─ _out/                                          # unified evaluation of the three models
-   ├─ ridge_wf_nav.csv                            # Ridge backtest NAV time series (standardized format)
-   ├─ ridge_wf_preds.csv                          # standardized Ridge predictions
-   ├─ elasticnet_wf_nav.csv                       # EN backtest NAV time series
-   ├─ elasticnet_wf_preds.csv                     # standardized EN predictions
-   ├─ mlp_wf_nav.csv                              # MLP backtest NAV time series
-   ├─ mlp_wf_preds.csv                            # standardized MLP predictions
-   └─ model_comparison_summary.csv                # cross-model comparison (return/Sharpe/drawdown, etc.)
-```
-
----
-
-## 6. Notes and Troubleshooting
-
-- If you see API/connection errors (e.g., AKShare or JQData),  
-  please double-check that the required CSV files are already present in the directory.
-- If you change file names, also update them in the notebook cells that read those files.
-- For reproducibility, you may want to fix random seeds inside the notebook (NumPy, PyTorch, etc.).
+Python, pandas, NumPy, scikit-learn, PyTorch, matplotlib, AKShare/JQData-style data access, and Jupyter Notebook.
