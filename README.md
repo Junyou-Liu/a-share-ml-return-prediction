@@ -49,11 +49,11 @@ Some annualized return outputs in the notebook are very high because they are ge
 
 Use Python 3.9 to 3.11 when possible.
 
-```bash
+```powershell
 python -m venv .venv
 
 # Windows
-.venv\\Scripts\\activate
+.venv\Scripts\activate
 
 # macOS / Linux
 # source .venv/bin/activate
