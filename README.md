@@ -17,7 +17,7 @@ The project is best read as a modeling and validation workflow: building factor 
 | Language | Python |
 | Analysis | pandas, NumPy |
 | Modeling | scikit-learn, PyTorch |
-| Workflow | Jupyter Notebook |
+| Workflow | Jupyter Notebook, modular Python scripts |
 | Market Data | AKShare / JQData-style data access, local CSV inputs |
 | Visualization | matplotlib |
 
@@ -29,6 +29,7 @@ The project is best read as a modeling and validation workflow: building factor 
 - Applied chronological splitting and rolling-origin validation to reduce look-ahead bias.
 - Evaluated model outputs through NAV, Sharpe, drawdown, hit rate, RankIC, turnover, and benchmark-relative indicators.
 - Kept input CSV files in the repository so the notebook can be reviewed without relying on external market-data APIs.
+- Added a lightweight `src/` package for reusable data loading, feature preparation, walk-forward prediction, backtesting, and evaluation utilities.
 
 ## Methodology
 
@@ -76,11 +77,26 @@ Command-line execution:
 jupyter nbconvert --execute --to notebook --inplace DSA5205_project2_Teams12_1115.ipynb --ExecutePreprocessor.timeout=1200
 ```
 
+Lightweight script pipeline:
+
+```powershell
+python -m src.run_research_pipeline --models ridge,elasticnet --min-train-weeks 52 --output-dir outputs/src_pipeline
+```
+
+The script pipeline is a reusable engineering refactor of the core workflow. The notebook remains the complete research record for the original course analysis and MLP training path.
+
 ## Repository Structure
 
 ```text
 .
 |-- DSA5205_project2_Teams12_1115.ipynb
+|-- src/
+|   |-- data_loader.py
+|   |-- feature_engineering.py
+|   |-- models.py
+|   |-- backtest.py
+|   |-- evaluation.py
+|   `-- run_research_pipeline.py
 |-- factors_6stocks_weekly_20251107_013757.csv
 |-- bm_399006_weekly.csv
 |-- MLP_data.csv
